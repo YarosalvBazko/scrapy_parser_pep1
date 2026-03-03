@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.db import get_async_session
-from app.models import CharityProject, Donation
+from app.models import CharityProject
 from app.schemas.charity_project import (
     CharityProjectCreate, CharityProjectDB, CharityProjectUpdate
 )
@@ -28,7 +28,7 @@ router = APIRouter()
     tags=["charity_projects"]
 )
 async def get_all_charity_projects(
-        session: AsyncSession = Depends(get_async_session)
+    session: AsyncSession = Depends(get_async_session)
 ):
     projects = await session.execute(
         select(CharityProject)
@@ -45,8 +45,8 @@ async def get_all_charity_projects(
     tags=["charity_projects"]
 )
 async def create_charity_project(
-        project_data: CharityProjectCreate,
-        session: AsyncSession = Depends(get_async_session)
+    project_data: CharityProjectCreate,
+    session: AsyncSession = Depends(get_async_session)
 ):
     await check_name_duplicate(project_data.name, session)
 
@@ -58,10 +58,9 @@ async def create_charity_project(
 
     session.add(new_project)
     await session.flush()
-
     await investing_process(new_project, session)
-
     await session.refresh(new_project)
+
     return new_project
 
 
@@ -73,9 +72,9 @@ async def create_charity_project(
     tags=["charity_projects"]
 )
 async def update_charity_project(
-        project_id: int,
-        project_data: CharityProjectUpdate,
-        session: AsyncSession = Depends(get_async_session)
+    project_id: int,
+    project_data: CharityProjectUpdate,
+    session: AsyncSession = Depends(get_async_session)
 ):
     project = await check_project_exists(project_id, session)
     await check_project_not_closed(project)
@@ -84,18 +83,21 @@ async def update_charity_project(
         await check_name_duplicate(project_data.name, session)
 
     if project_data.full_amount is not None:
-        await check_full_amount_not_less_invested(project_data.full_amount, project)
+        await check_full_amount_not_less_invested(
+            project_data.full_amount,
+            project
+        )
 
     for field, value in project_data.model_dump(exclude_unset=True).items():
         setattr(project, field, value)
-    
-    # Проверяем, не закрылся ли проект после обновления full_amount
+
     if project.full_amount <= project.invested_amount:
         project.fully_invested = True
         project.close_date = project.create_date
 
     await session.commit()
     await session.refresh(project)
+
     return project
 
 
@@ -107,8 +109,8 @@ async def update_charity_project(
     tags=["charity_projects"]
 )
 async def delete_charity_project(
-        project_id: int,
-        session: AsyncSession = Depends(get_async_session)
+    project_id: int,
+    session: AsyncSession = Depends(get_async_session)
 ):
     project = await check_project_exists(project_id, session)
     await check_project_not_invested(project)

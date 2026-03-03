@@ -2,12 +2,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.models import CharityProject, Donation
+from app.models import CharityProject
 
 
 async def check_name_duplicate(
-        project_name: str,
-        session: AsyncSession
+    project_name: str,
+    session: AsyncSession
 ) -> None:
     project = await session.execute(
         select(CharityProject).where(CharityProject.name == project_name)
@@ -20,8 +20,8 @@ async def check_name_duplicate(
 
 
 async def check_project_exists(
-        project_id: int,
-        session: AsyncSession
+    project_id: int,
+    session: AsyncSession
 ) -> CharityProject:
     project = await session.execute(
         select(CharityProject).where(CharityProject.id == project_id)
@@ -36,7 +36,7 @@ async def check_project_exists(
 
 
 async def check_project_not_closed(
-        project: CharityProject
+    project: CharityProject
 ) -> None:
     if project.fully_invested:
         raise HTTPException(
@@ -46,7 +46,7 @@ async def check_project_not_closed(
 
 
 async def check_project_not_invested(
-        project: CharityProject
+    project: CharityProject
 ) -> None:
     if project.invested_amount > 0:
         raise HTTPException(
@@ -56,11 +56,12 @@ async def check_project_not_invested(
 
 
 async def check_full_amount_not_less_invested(
-        new_full_amount: int,
-        project: CharityProject
+    new_full_amount: int,
+    project: CharityProject
 ) -> None:
     if new_full_amount < project.invested_amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Нельзя установить значение full_amount меньше уже вложенной суммы."
+            detail="Нельзя установить значение " \
+            "full_amount меньше уже вложенной суммы."
         )
