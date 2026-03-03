@@ -88,6 +88,11 @@ async def update_charity_project(
 
     for field, value in project_data.model_dump(exclude_unset=True).items():
         setattr(project, field, value)
+    
+    # Проверяем, не закрылся ли проект после обновления full_amount
+    if project.full_amount <= project.invested_amount:
+        project.fully_invested = True
+        project.close_date = project.create_date
 
     await session.commit()
     await session.refresh(project)

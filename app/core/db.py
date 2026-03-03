@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
     create_date = Column(DateTime, server_default=func.now(), nullable=False)
 
 
-engine = create_async_engine(settings.database_url)
+engine = create_async_engine(settings.database_url, echo=False)
 
 AsyncSessionLocal = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
